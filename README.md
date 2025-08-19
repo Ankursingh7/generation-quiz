@@ -1,11 +1,27 @@
-<div align="center">
+# AI Quiz Generator
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+An intelligent assistant for teachers and educators to effortlessly create quizzes from educational text. Simply paste a chapter, an article, or upload a PDF, and the AI will generate relevant multiple-choice and true/false questions in seconds.
 
-  <h1>Built with AI Studio</h2>
+## Features
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+-   **Text-Based Quiz Generation**: Paste any text directly into the application.
+-   **PDF Upload**: Upload PDF documents and the app will automatically extract the text content.
+-   **Multiple Question Types**: Generates a mix of Multiple-Choice and True/False questions.
+-   **Instant Results**: View the generated quiz on the same page, with correct answers clearly marked.
+-   **Clean & Modern UI**: A user-friendly and aesthetically pleasing interface.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## How to Use
 
-</div>
+1.  **Provide Content**:
+    -   Click **Upload PDF** to select a document from your device. The text will be automatically extracted and placed in the text area.
+    -   Or, manually **paste your text** into the provided text area.
+2.  **Generate Quiz**:
+    -   Click the **Generate Quiz** button.
+3.  **Review**:
+    -   The generated quiz will appear below. Review the questions and answers for accuracy and appropriateness for your students.
+
+## Tech Stack
+
+-   **Frontend**: React, TypeScript, Tailwind CSS
+-   **AI Model**: Google Gemini API (`@google/genai`)
+-   **PDF Processing**: PDF.js (`pdfjs-dist`)

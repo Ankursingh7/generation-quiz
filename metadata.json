@@ -1,0 +1,5 @@
+{
+  "name": "AI Quiz Generator",
+  "description": "An assistant for teachers to create quizzes from educational text. Paste a chapter or article, and the AI will generate multiple-choice and true/false questions.",
+  "requestFramePermissions": []
+}
