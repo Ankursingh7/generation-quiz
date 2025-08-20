@@ -1,14 +1,11 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Quiz } from '../types';
 
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// The API key is assumed to be available in the environment variables,
+// which is a secure practice for deployment.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const quizSchema = {
   type: Type.OBJECT,
