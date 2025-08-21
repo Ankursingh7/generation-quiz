@@ -6,10 +6,7 @@ import Loader from './Loader';
 import ErrorMessage from './ErrorMessage';
 import UploadIcon from './icons/UploadIcon';
 import SparklesIcon from './icons/SparklesIcon';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Dynamically set the worker source based on the library's version to prevent mismatches.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
+import Instructions from './Instructions';
 
 const getOptionPrefix = (option: string): string => {
   if (typeof option !== 'string') return '';
@@ -108,6 +105,10 @@ const QuizGenerator: React.FC = () => {
     setIsLoading(true); // Use main loader for consistency
 
     try {
+        const pdfjsLib = await import('pdfjs-dist');
+        // Dynamically set the worker source based on the library's version to prevent mismatches.
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
+
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
         const numPages = pdf.numPages;
@@ -144,6 +145,7 @@ const QuizGenerator: React.FC = () => {
     <div className="space-y-8">
       {!quiz && (
         <>
+            <Instructions />
             <div className="bg-slate-800/50 p-6 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-sm">
                 <label htmlFor="chapter-text" className="block text-lg font-semibold text-slate-200 mb-2">
                 Source Material

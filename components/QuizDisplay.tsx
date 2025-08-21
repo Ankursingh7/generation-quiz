@@ -94,11 +94,11 @@ const TfCard: React.FC<{
     index: number;
     userAnswer: string | undefined;
     submitted: boolean;
+    mcqCount: number;
     onAnswerChange: (questionKey: string, answer: string) => void;
-}> = ({ question, index, submitted, onAnswerChange, userAnswer }) => {
+}> = ({ question, index, submitted, onAnswerChange, userAnswer, mcqCount }) => {
   if (!question || typeof question.question !== 'string' || typeof question.answer !== 'string') return null;
   const questionKey = `tf-${index}`;
-  const mcqCount = 5; // Assuming 5 MCQs before T/F questions
 
   return (
     <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700/60 transition-all duration-300 hover:shadow-purple-500/10 hover:-translate-y-1">
@@ -199,6 +199,7 @@ const QuizDisplay: React.FC<QuizDisplayProps> = ({ quiz, userAnswers, submitted,
                         userAnswer={userAnswers[`tf-${index}`]}
                         submitted={submitted}
                         onAnswerChange={onAnswerChange}
+                        mcqCount={quiz.multiple_choice.length}
                     />
                  </div> : null
           ))}
