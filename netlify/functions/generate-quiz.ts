@@ -10,7 +10,7 @@ const quizSchema = {
   properties: {
     multiple_choice: {
       type: Type.ARRAY,
-      description: "An array of 5 multiple-choice questions.",
+      description: "An array of up to 5 multiple-choice questions. It's okay to generate fewer if the text is short.",
       items: {
         type: Type.OBJECT,
         properties: {
@@ -33,7 +33,7 @@ const quizSchema = {
     },
     true_false: {
       type: Type.ARRAY,
-      description: "An array of 5 true/false questions.",
+      description: "An array of up to 5 true/false questions. It's okay to generate fewer if the text is short.",
       items: {
         type: Type.OBJECT,
         properties: {
@@ -54,37 +54,19 @@ const quizSchema = {
 };
 
 const generateQuiz = async (text: string): Promise<Quiz> => {
-  const prompt = `You are a Quiz Question Creator for Educators.
+  const prompt = `You are an expert Quiz Creator for educators. Your task is to generate a quiz from the provided text.
 
-Input: The raw text from a PDF chapter is provided below.
+**Instructions:**
+1.  Carefully analyze the input text below. It could be a standard article, a book chapter, or technical content like mathematical equations.
+2.  Identify the key concepts, definitions, facts, and principles.
+    -   If the text is prose, focus on the main ideas.
+    -   If the text contains mathematical problems or formulas, create questions about the concepts, properties, or interpretations of the material shown.
+3.  Generate up to 5 multiple-choice questions and up to 5 true/false questions. It is okay to generate fewer if the source material is short or lacks detail.
+4.  Ensure questions are clear and directly relate to the provided material.
+5.  Format the final output strictly as a JSON object according to the schema. Do not include any other text, explanations, or apologies.
+    -   If you absolutely cannot extract any meaningful educational content to form questions, you must return a valid JSON object with empty arrays for 'multiple_choice' and 'true_false'.
 
-Task:
-1. Read the provided text.
-2. Extract the main ideas, facts, and key points.
-3. Create:
-   - 5 Multiple-Choice Questions (MCQs) with 4 options each. Clearly mark the correct answer.
-   - 5 True/False questions with correct answers.
-4. Ensure questions are clear, age-appropriate, and evenly cover the text.
-5. Output the result in JSON format using the structure below:
-
-{
-  "multiple_choice": [
-    {
-      "question": "....",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "answer": "B"
-    }
-  ],
-  "true_false": [
-    {
-      "question": "....",
-      "answer": "True"
-    }
-  ]
-}
-
-Do not include explanations or commentary—only the questions, options, and answers in the JSON.
-
+**Input Text:**
 ---
 ${text}
 ---
@@ -104,13 +86,23 @@ ${text}
     const jsonString = response.text;
     const quizData: Quiz = JSON.parse(jsonString);
     
+    // Basic validation
     if (!quizData.multiple_choice || !quizData.true_false) {
         throw new Error("Invalid quiz format received from API.");
     }
+    
+    // Check if the AI returned empty arrays because it couldn't process the text
+    if (quizData.multiple_choice.length === 0 && quizData.true_false.length === 0) {
+        throw new Error("Could not generate meaningful questions from the provided text. Please try using a different source material with more descriptive content.");
+    }
 
     return quizData;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating quiz in function:", error);
+    // If the error message is our specific one, use it. Otherwise, use the generic one.
+    if (error.message.startsWith("Could not generate")) {
+        throw error;
+    }
     throw new Error("Failed to generate quiz. The provided text might be too short or the content could not be processed.");
   }
 };
