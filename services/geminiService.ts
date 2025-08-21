@@ -1,40 +1,116 @@
 
+import { GoogleGenAI, Type } from "@google/genai";
 import type { Quiz } from '../types';
 
+// The API key is sourced from the environment and used directly on the client.
+// In a production app, this call should ideally be made from a backend server to protect the API key.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+const quizSchema = {
+  type: Type.OBJECT,
+  properties: {
+    multiple_choice: {
+      type: Type.ARRAY,
+      description: "An array of up to 5 multiple-choice questions. It's okay to generate fewer if the text is short.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question: {
+            type: Type.STRING,
+            description: "The question text."
+          },
+          options: {
+            type: Type.ARRAY,
+            description: "An array of 4 potential answers, formatted like 'A) ...', 'B) ...', etc.",
+            items: { type: Type.STRING }
+          },
+          answer: {
+            type: Type.STRING,
+            description: "The letter of the correct option (e.g., 'A', 'B', 'C', 'D')."
+          },
+        },
+        required: ["question", "options", "answer"],
+      },
+    },
+    true_false: {
+      type: Type.ARRAY,
+      description: "An array of up to 5 true/false questions. It's okay to generate fewer if the text is short.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question: {
+            type: Type.STRING,
+            description: "The statement for the true/false question."
+          },
+          answer: {
+            type: Type.STRING,
+            description: "The correct answer, either 'True' or 'False'."
+          },
+        },
+        required: ["question", "answer"],
+      },
+    },
+  },
+  required: ["multiple_choice", "true_false"],
+};
+
+
 /**
- * Generates a quiz from a given piece of text by calling a Netlify serverless function.
+ * Generates a quiz from a given piece of text by calling the Gemini API directly from the client.
  * @param {string} text The input text to generate the quiz from.
  * @returns {Promise<Quiz>} A promise that resolves to the generated quiz object.
  * @throws {Error} Throws an error if the API call fails or the response is in an invalid format.
  */
 export const generateQuizFromText = async (text: string): Promise<Quiz> => {
-  const functionUrl = '/.netlify/functions/generate-quiz';
+    const prompt = `You are an expert Quiz Creator for educators. Your task is to generate a quiz from the provided text.
+
+**Instructions:**
+1.  Carefully analyze the input text below. It could be a standard article, a book chapter, or technical content like mathematical equations.
+2.  Identify the key concepts, definitions, facts, and principles.
+    -   If the text is prose, focus on the main ideas.
+    -   If the text contains mathematical problems or formulas, create questions about the concepts, properties, or interpretations of the material shown.
+3.  Generate up to 5 multiple-choice questions and up to 5 true/false questions. It is okay to generate fewer if the source material is short or lacks detail.
+4.  Ensure questions are clear and directly relate to the provided material.
+5.  Format the final output strictly as a JSON object according to the schema. Do not include any other text, explanations, or apologies.
+    -   If you absolutely cannot extract any meaningful educational content to form questions, you must return a valid JSON object with empty arrays for 'multiple_choice' and 'true_false'.
+
+**Input Text:**
+---
+${text}
+---
+`;
 
   try {
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: quizSchema,
+        temperature: 0.7,
       },
-      body: JSON.stringify({ text }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Failed to generate quiz. The server returned an invalid response.' }));
-      throw new Error(errorData.error || `Request failed with status ${response.status}`);
-    }
-
-    const quizData: Quiz = await response.json();
-
-    // Basic validation to ensure the structure is what we expect.
+    const jsonString = response.text;
+    const quizData: Quiz = JSON.parse(jsonString);
+    
+    // Basic validation
     if (!quizData.multiple_choice || !quizData.true_false) {
-        throw new Error("Invalid quiz format received from the server.");
+        throw new Error("Invalid quiz format received from API.");
     }
     
+    // Check if the AI returned empty arrays because it couldn't process the text
+    if (quizData.multiple_choice.length === 0 && quizData.true_false.length === 0) {
+        throw new Error("Could not generate meaningful questions from the provided text. Please try using a different source material with more descriptive content.");
+    }
+
     return quizData;
   } catch (error: any) {
-    console.error("Error calling Netlify function:", error);
+    console.error("Error calling Gemini API:", error);
     // Re-throw a user-friendly error message.
-    throw new Error(error.message || "Failed to communicate with the quiz generation service. Please check your network connection and try again.");
+    if (error.message.startsWith("Could not generate")) {
+        throw error;
+    }
+    throw new Error("Failed to generate quiz. The provided text might be too short, the content could not be processed, or there might be an issue with the API key.");
   }
 };
