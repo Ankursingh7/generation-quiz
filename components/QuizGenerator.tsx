@@ -105,12 +105,15 @@ const QuizGenerator: React.FC = () => {
     setIsLoading(true); // Use main loader for consistency
 
     try {
-        const pdfjsLib = await import('pdfjs-dist');
+        // By destructuring the dynamic import, we give the bundler a better hint
+        // for code-splitting, which should resolve the chunk size warning.
+        const { getDocument, GlobalWorkerOptions, version } = await import('pdfjs-dist');
+        
         // Dynamically set the worker source based on the library's version to prevent mismatches.
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
+        GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.mjs`;
 
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        const pdf = await getDocument(arrayBuffer).promise;
         const numPages = pdf.numPages;
         let fullText = '';
 
