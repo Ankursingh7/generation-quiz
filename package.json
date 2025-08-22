@@ -12,7 +12,10 @@
     "react-dom": "^19.1.1",
     "@google/genai": "^1.15.0",
     "react": "^19.1.1",
-    "pdfjs-dist": "^4.5.136"
+    "pdfjs-dist": "^4.5.136",
+    "mammoth": "^1.7.2",
+    "jspdf": "^2.5.1",
+    "docx": "^8.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

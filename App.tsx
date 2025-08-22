@@ -1,6 +1,9 @@
 import React from 'react';
 import Header from './components/Header';
 import QuizGenerator from './components/QuizGenerator';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import HowItWorks from './components/HowItWorks';
 
 const BackgroundPattern = () => (
     <div className="absolute inset-0 z-[-1] overflow-hidden">
@@ -15,8 +18,8 @@ const BackgroundPattern = () => (
                     height="40"
                     patternUnits="userSpaceOnUse"
                 >
-                    <path d="M.5 20v20H20" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1"></path>
-                    <path d="M20.5 0v20H40" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1"></path>
+                    <path d="M.5 20v20H20" fill="none" stroke="rgba(156, 172, 192, 0.4)" strokeWidth="1"></path>
+                    <path d="M20.5 0v20H40" fill="none" stroke="rgba(156, 172, 192, 0.4)" strokeWidth="1"></path>
                 </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#subtle-pattern)"></rect>
@@ -40,13 +43,18 @@ const App: React.FC = () => {
         .animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; }
         .animate-shake { animation: shake 0.3s ease-in-out forwards; }
     `}</style>
-    <div className="min-h-screen font-sans text-slate-300 bg-slate-900 relative">
+    <div className="min-h-screen font-sans text-slate-700 bg-slate-300 relative">
       <BackgroundPattern />
       <Header />
-      <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <QuizGenerator />
+      <main>
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <div id="quiz-generator-section" className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 sm:py-24 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+          <QuizGenerator />
+        </div>
       </main>
-      <footer className="text-center py-6 text-sm text-slate-500">
+      <footer className="text-center py-6 text-sm text-slate-600">
         <p>Powered by Google Gemini. Always review questions for accuracy and appropriateness.</p>
       </footer>
     </div>
