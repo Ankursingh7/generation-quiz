@@ -1,8 +1,7 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import type { Quiz } from '../types';
 
 /**
- * Generates a quiz by sending the input text to the Gemini API.
+ * Generates a quiz by sending the input text to the backend service.
  * @param {string} text The input text to generate the quiz from.
  * @param {number} numMcq The number of multiple-choice questions to generate.
  * @param {number} numTf The number of true/false questions to generate.
@@ -11,97 +10,25 @@ import type { Quiz } from '../types';
  */
 export const generateQuizFromText = async (text: string, numMcq: number, numTf: number): Promise<Quiz> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    const quizSchema = {
-      type: Type.OBJECT,
-      properties: {
-        multiple_choice: {
-          type: Type.ARRAY,
-          description: `An array of up to ${numMcq} multiple-choice questions. It's okay to generate fewer if the text is short.`,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              question: {
-                type: Type.STRING,
-                description: "The question text."
-              },
-              options: {
-                type: Type.ARRAY,
-                description: "An array of 4 potential answers, formatted like 'A) ...', 'B) ...', etc.",
-                items: { type: Type.STRING }
-              },
-              answer: {
-                type: Type.STRING,
-                description: "The letter of the correct option (e.g., 'A', 'B', 'C', 'D')."
-              },
-            },
-            required: ["question", "options", "answer"],
-          },
-        },
-        true_false: {
-          type: Type.ARRAY,
-          description: `An array of up to ${numTf} true/false questions. It's okay to generate fewer if the text is short.`,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              question: {
-                type: Type.STRING,
-                description: "The statement for the true/false question."
-              },
-              answer: {
-                type: Type.STRING,
-                description: "The correct answer, either 'True' or 'False'."
-              },
-            },
-            required: ["question", "answer"],
-          },
-        },
+    const response = await fetch('/.netlify/functions/generate-quiz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      required: ["multiple_choice", "true_false"],
-    };
-    
-    const systemInstruction = `You are an expert Quiz Creator for educators. Your task is to generate a quiz from the provided text.
-
-**Instructions:**
-1.  Carefully analyze the input text. It could be a standard article, a book chapter, or technical content like mathematical equations.
-2.  Identify the key concepts, definitions, facts, and principles.
-    -   If the text is prose, focus on the main ideas.
-    -   If the text contains mathematical problems or formulas, create questions about the concepts, properties, or interpretations of the material shown.
-3.  Generate up to ${numMcq} multiple-choice questions and up to ${numTf} true/false questions. It is okay to generate fewer if the source material is short or lacks detail.
-4.  Ensure questions are clear and directly relate to the provided material.
-5.  Format the final output strictly as a JSON object according to the schema. Do not include any other text, explanations, or apologies.
-    -   If you absolutely cannot extract any meaningful educational content to form questions, you must return a valid JSON object with empty arrays for 'multiple_choice' and 'true_false'.`;
-    
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: text,
-        config: {
-            systemInstruction: systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema: quizSchema,
-            temperature: 0.7,
-        },
+      body: JSON.stringify({ text, numMcq, numTf }),
     });
 
-    const jsonString = response.text;
-    const quizData: Quiz = JSON.parse(jsonString);
-
-    if (!quizData || !quizData.multiple_choice || !quizData.true_false) {
-        throw new Error("Invalid quiz format received from API.");
-    }
-    
-    if (quizData.multiple_choice.length === 0 && quizData.true_false.length === 0) {
-        throw new Error("Could not generate meaningful questions from the provided text. Please try using a different source material with more descriptive content.");
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'An unexpected server error occurred.' }));
+        throw new Error(errorData.error || `Server responded with status: ${response.status}`);
     }
 
+    const quizData: Quiz = await response.json();
     return quizData;
   } catch (error: any) {
-    console.error("Error generating quiz:", error);
-    // Re-throw a user-friendly error to be caught by the UI component.
-    if (error.message.startsWith("Could not generate")) {
-        throw error;
-    }
-    throw new Error("Failed to generate quiz. The provided text might be too short, the content could not be processed, or there might be an issue with the API key.");
+    console.error("Error calling backend service:", error);
+    // Re-throw the error to be caught by the UI component.
+    // The error message from the backend or the fetch failure will be propagated.
+    throw new Error(error.message || "Failed to connect to the quiz generation service.");
   }
 };
