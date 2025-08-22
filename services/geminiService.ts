@@ -61,28 +61,23 @@ export const generateQuizFromText = async (text: string, numMcq: number, numTf: 
       required: ["multiple_choice", "true_false"],
     };
     
-    const prompt = `You are an expert Quiz Creator for educators. Your task is to generate a quiz from the provided text.
+    const systemInstruction = `You are an expert Quiz Creator for educators. Your task is to generate a quiz from the provided text.
 
 **Instructions:**
-1.  Carefully analyze the input text below. It could be a standard article, a book chapter, or technical content like mathematical equations.
+1.  Carefully analyze the input text. It could be a standard article, a book chapter, or technical content like mathematical equations.
 2.  Identify the key concepts, definitions, facts, and principles.
     -   If the text is prose, focus on the main ideas.
     -   If the text contains mathematical problems or formulas, create questions about the concepts, properties, or interpretations of the material shown.
 3.  Generate up to ${numMcq} multiple-choice questions and up to ${numTf} true/false questions. It is okay to generate fewer if the source material is short or lacks detail.
 4.  Ensure questions are clear and directly relate to the provided material.
 5.  Format the final output strictly as a JSON object according to the schema. Do not include any other text, explanations, or apologies.
-    -   If you absolutely cannot extract any meaningful educational content to form questions, you must return a valid JSON object with empty arrays for 'multiple_choice' and 'true_false'.
-
-**Input Text:**
----
-${text}
----
-`;
+    -   If you absolutely cannot extract any meaningful educational content to form questions, you must return a valid JSON object with empty arrays for 'multiple_choice' and 'true_false'.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: prompt,
+        contents: text,
         config: {
+            systemInstruction: systemInstruction,
             responseMimeType: "application/json",
             responseSchema: quizSchema,
             temperature: 0.7,
